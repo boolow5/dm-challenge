@@ -23,30 +23,51 @@ def parse_woman_link_url(content=None):
     print('Parsing page...')
     soup = BeautifulSoup(content,'html5lib')
     # find the parent div for all categories in woman
+    woman_category_div1 = soup.find('div', class_='primary-menu-sub-menu-inner')
+    print()
+    # print(woman_category_div1)
+    # for item in woman_category_div1.select('.primary-menu-category'):
+    #     print('item')
+    #     print(item)
+
     woman_category_div = soup.find('div', class_='primary-menu-sub-menu').select('.primary-menu-category')
 
     if woman_category_div is None:
         print("Failed to get categories parent div")
         return None
+
+    # start appending to categories
+    start = False
+    # end appending to categories
+    end = False
+    sub_categories = []
     for category in woman_category_div:
         heading = category.select('.sub-sub-heading')
         name = ''
         if len(heading) > 0 and heading[0].text:
             name = heading[0].text
-        sub_categories = []
+        print('name: {}'.format(name))
+        # parse only categories between 'sub-sub-heading' with text 'Shop by Product' and 'Selected'
         if 'Shop by Product' in name:
-            print('Sub cateogry {}'.format(name))
+            start = True
+        elif 'Selected' in name:
+            # skep the rest
+            return sub_categories
+        if start and not end:
+            print('parsing "{}"...'.format(name))
             for sub in category.select('ul li a'):
                 # skip the view all link
                 if 'view-all' in sub['href']:
                     continue
-                sub_categories += [stitch_url('http://www2.hm.com', sub['href'])]
+                url = stitch_url('http://www2.hm.com', sub['href'])
+                print('URL: {}'.format(url))
+                sub_categories += [{'url': url, 'name': sub.text.strip()}]
+            
+            # if reached here means category is found
+            # return sub_categories
         else:
-            # not category
-            continue
-        # if reached here means category is found
-        return sub_categories
-    return None
+            print('skipping "{}"...'.format(name))
+    return []
 
 def stitch_url(base_url, path):
     '''
