@@ -18,8 +18,8 @@ if __name__=='__main__':
         url = category.get('url')
         if name == '' or url == '':
             continue
-        count = extract_item_count(url)
-        lines += '{name},{count},{url}\n'.format(name=name, count=count, url=url)
+        count, last_item_url = extract_item_count(url)
+        lines += '{name},{count},{url}\n'.format(name=name, count=count, url=last_item_url)
     
     print()
     # write to file

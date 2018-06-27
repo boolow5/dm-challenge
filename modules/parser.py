@@ -11,7 +11,7 @@ def fetch_page(url=None):
     print('Requesting url: {}'.format(url))
     # pause one second to prevent being blacklisted
     # some servers black list scripts that try to access
-    time.sleep(1)
+    time.sleep(0.1)
     response = requests.get(url)
     if response and response.content is not None:
         return response.content
@@ -90,11 +90,15 @@ def extract_item_count(category_url):
     '''
     number_of_items = 0
     category_name = ''
+    print('extracting count and last item url from {}'.format(category_url))
+    if category_url is None or category_url == '':
+        return None, None
     # parse the count from the category_url
     page = fetch_page(category_url)
     soup = BeautifulSoup(page,'html5lib')
     count = soup.find('span', class_='total-count')
-    return count.text or 0
+    url = find_last_item_url(soup)
+    return [count.text.strip() or 0, stitch_url('http://www2.hm.com', url)]
 
 
 
@@ -109,3 +113,20 @@ def find_name_in_category_url(category_url):
     if len(parts) > 0:
         name = parts[0]
     return name.capitalize().replace('-', ' ')
+
+def find_last_item_url(soup=None):
+    '''
+    find_last_item_url finds category page's last item
+    '''
+    if soup is None:
+        return None
+    # get the page and parse
+    wrapper_div = soup.find('div', class_='product-items-wrapper')
+    all_items = wrapper_div.select('article h3.product-item-heading a')
+    url = ''
+    if len(all_items) > 0:
+        last_item = all_items[-1]
+        print('last item: {}'.format(last_item.text))
+        if len(last_item) > 0:
+            url = last_item.get('href')
+    return url
